@@ -9,14 +9,20 @@ from firebase_admin import credentials, firestore
 st.set_page_config(page_title="FluentMind Pro", layout="wide")
 
 # ------------------ STYLE ------------------
+
 st.markdown("""
 <style>
+[data-testid="stSidebar"] {
+    background-color: #111827;
+}
+
 .stApp {
     background-color: #0e1117;
     color: white;
 }
-h1, h2 {
-    color: #00FFAA;
+
+h1, h2, h3 {
+    color: #f9fafb;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -121,25 +127,68 @@ elif menu == "💬 Practice":
 
 # ------------------ DASHBOARD ------------------
 elif menu == "📊 Dashboard":
-    st.title("📊 Progress Dashboard")
+    st.title("Welcome back, Dastha 👋")
 
     df = get_data()
 
     if df.empty:
-        st.warning("No data yet.")
+        avg_score = 0
+        total_sessions = 0
+        streak = 0
+        level = "Lvl 1"
     else:
-        st.dataframe(df)
-
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         df = df.sort_values("timestamp")
 
-        st.subheader("📈 Score Trend")
-        st.line_chart(df.set_index("timestamp")["score"])
+        avg_score = round(df["score"].mean(), 2)
+        total_sessions = len(df)
+        streak = len(df[df["timestamp"] > (pd.Timestamp.now() - pd.Timedelta(days=1))])
+        level = "Lvl 1" if avg_score < 5 else "Lvl 2"
 
-        col1, col2 = st.columns(2)
+    # ---------- CARDS ----------
+    col1, col2, col3, col4 = st.columns(4)
 
-        with col1:
-            st.metric("Average Score", round(df["score"].mean(), 2))
+    def card(title, value):
+        st.markdown(f"""
+        <div style="
+            background-color:#1f2937;
+            padding:20px;
+            border-radius:12px;
+            text-align:center;
+            box-shadow:0 4px 10px rgba(0,0,0,0.3);
+        ">
+            <p style="color:#9ca3af; font-size:14px;">{title}</p>
+            <h2 style="color:white;">{value}</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-        with col2:
-            st.metric("Total Attempts", len(df))
+    with col1:
+        card("Average Fluency", f"{avg_score}")
+
+    with col2:
+        card("Total Sessions", f"{total_sessions}")
+
+    with col3:
+        card("Current Streak", f"{streak} Days")
+
+    with col4:
+        card("Current Level", level)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ---------- CHARTS ----------
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### Fluency Trend")
+        if not df.empty:
+            st.line_chart(df.set_index("timestamp")["score"])
+        else:
+            st.info("No data yet. Start practicing!")
+
+    with col2:
+        st.markdown("### Skill Breakdown")
+        if not df.empty:
+            st.bar_chart(df["score"].value_counts())
+        else:
+            st.info("No data yet. Start practicing!")
