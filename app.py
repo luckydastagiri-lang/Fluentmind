@@ -21,10 +21,11 @@ h1, h2 {
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------ GEMINI (NEW SDK) ------------------
+# ------------------ GEMINI SETUP ------------------
 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
-# ------------------ FIREBASE ------------------
+# ------------------ FIREBASE SETUP ------------------
+# 🔥 Important: for deployment, file must exist in repo
 if not firebase_admin._apps:
     cred = credentials.Certificate("firebase.json")
     firebase_admin.initialize_app(cred)
@@ -42,15 +43,6 @@ def analyze_text(text):
         "4. Give short feedback\n\n"
         f"Sentence: {text}"
     )
-
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
-        return response.text
-    except Exception as e:
-        return f"Error: {e}"
 
     try:
         response = client.models.generate_content(
@@ -95,7 +87,7 @@ menu = st.sidebar.radio("Navigation", ["🏠 Home", "💬 Practice", "📊 Dashb
 # ------------------ HOME ------------------
 if menu == "🏠 Home":
     st.title("🚀 FluentMind AI Coach")
-    st.write("Improve your English communication using AI.")
+    st.write("Improve your English communication using AI-powered feedback.")
 
 # ------------------ PRACTICE ------------------
 elif menu == "💬 Practice":
@@ -104,12 +96,11 @@ elif menu == "💬 Practice":
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Show chat history
+    # Chat history
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-    # Input
     user_input = st.chat_input("Type your sentence...")
 
     if user_input:
@@ -130,7 +121,7 @@ elif menu == "💬 Practice":
 
 # ------------------ DASHBOARD ------------------
 elif menu == "📊 Dashboard":
-    st.title("📊 Dashboard")
+    st.title("📊 Progress Dashboard")
 
     df = get_data()
 
